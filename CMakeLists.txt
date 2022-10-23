@@ -327,7 +327,7 @@ IF (APPLE)
   FIND_LIBRARY(COCOA_LIBRARY Cocoa)
 ENDIF()
 
-OPTION(BUILD_BULLET3 "Set when you want to build Bullet 3" ON)
+OPTION(BUILD_BULLET3 "Set when you want to build Bullet 3" OFF)
 
 # Optional Python configuration
 # Will not probe environment for Python configuration (which can abort the
@@ -349,8 +349,8 @@ IF(BUILD_PYBULLET)
 	FIND_PACKAGE(PythonLibs ${PYTHON_VERSION_STRING} EXACT)
 ENDIF(BUILD_PYBULLET)
 
-OPTION(BUILD_ENET "Set when you want to build apps with enet UDP networking support" ON)
-OPTION(BUILD_CLSOCKET "Set when you want to build apps with enet TCP networking support" ON)
+OPTION(BUILD_ENET "Set when you want to build apps with enet UDP networking support" OFF)
+OPTION(BUILD_CLSOCKET "Set when you want to build apps with enet TCP networking support" OFF)
 
 
 IF(BUILD_PYBULLET)
@@ -426,7 +426,7 @@ ELSE()
 	ADD_DEFINITIONS(-DNO_OPENGL3)
 ENDIF(BUILD_OPENGL3_DEMOS)
 
-OPTION(BUILD_BULLET2_DEMOS "Set when you want to build the Bullet 2 demos" ON)
+OPTION(BUILD_BULLET2_DEMOS "Set when you want to build the Bullet 2 demos" OFF)
 IF(BUILD_BULLET2_DEMOS)
 
 	IF(EXISTS ${BULLET_PHYSICS_SOURCE_DIR}/examples AND IS_DIRECTORY ${BULLET_PHYSICS_SOURCE_DIR}/examples)
@@ -446,11 +446,19 @@ ENDIF(BUILD_EXTRAS)
 
 SUBDIRS(src)
 
+IF(${UNIX})
+    set(MYGE_TARGET_PLATFORM "Linux")
+ELSEIF(${WIN32})
+    set(MYGE_TARGET_PLATFORM "Windows")
+ENDIF(${UNIX})
+
+set(MYGE_EXTERNAL_ROOT ${PROJECT_BINARY_DIR}/../../${MYGE_TARGET_PLATFORM})
+
 IF("${CMAKE_GENERATOR}" MATCHES "Unix Makefiles")
-	OPTION(INSTALL_LIBS "Set when you want to install libraries" ON)
+	OPTION(INSTALL_LIBS "Set when you want to install libraries" OFF)
 ELSE()
 	IF(APPLE AND FRAMEWORK)
-		OPTION(INSTALL_LIBS "Set when you want to install libraries" ON)
+		OPTION(INSTALL_LIBS "Set when you want to install libraries" OFF)
 	ELSE()
 #by default, don't enable the 'INSTALL' option for Xcode and MSVC projectfiles
 		OPTION(INSTALL_LIBS "Set when you want to install libraries" OFF)
@@ -466,11 +474,10 @@ IF(INSTALL_LIBS)
 		ENDIF (${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} GREATER 2.5)
 	ENDIF(BUILD_EXTRAS)
 
-	SET (LIB_SUFFIX "" CACHE STRING "Define suffix of directory name (32/64)" )
-	SET (LIB_DESTINATION "lib${LIB_SUFFIX}" CACHE STRING "Library directory name")
+	SET (LIB_DESTINATION "${MYGE_EXTERNAL_ROOT}/lib" CACHE STRING "Library directory name")
 	## the following are directories where stuff will be installed to
-	SET(INCLUDE_INSTALL_DIR "include/bullet/" CACHE PATH "The subdirectory to the header prefix")
-	SET(PKGCONFIG_INSTALL_PREFIX "lib${LIB_SUFFIX}/pkgconfig/" CACHE STRING "Base directory for pkgconfig files")
+	SET(INCLUDE_INSTALL_DIR "${MYGE_EXTERNAL_ROOT}/include/bullet" CACHE PATH "The subdirectory to the header prefix")
+	SET(PKGCONFIG_INSTALL_PREFIX "${MYGE_EXTERNAL_ROOT}/share/pkgconfig/" CACHE STRING "Base directory for pkgconfig files")
 	IF(NOT MSVC)
 	  CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/bullet.pc.cmake ${CMAKE_CURRENT_BINARY_DIR}/bullet.pc @ONLY)
   	INSTALL(
@@ -489,7 +496,7 @@ IF (BUILD_UNIT_TESTS)
 	SUBDIRS(test)
 ENDIF()
 
-set (BULLET_CONFIG_CMAKE_PATH lib${LIB_SUFFIX}/cmake/bullet )
+set (BULLET_CONFIG_CMAKE_PATH ${MYGE_EXTERNAL_ROOT}/share/cmake/bullet )
 list (APPEND BULLET_DEFINITIONS ${BULLET_DOUBLE_DEF})
 list (APPEND BULLET_LIBRARIES LinearMath)
 list (APPEND BULLET_LIBRARIES Bullet3Common)
